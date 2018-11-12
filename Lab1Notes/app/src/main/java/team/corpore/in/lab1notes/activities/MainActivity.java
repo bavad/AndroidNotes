@@ -1,6 +1,8 @@
 package team.corpore.in.lab1notes.activities;
 
 import android.content.Intent;
+import android.os.Handler;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
@@ -25,8 +27,11 @@ public class MainActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private RecyclerView notesRV;
+    private SearchView searchView;
     private NotesAdapter notesAdapter;
     private ArrayList<Note> notes = new ArrayList<>();
+    private boolean firstClassIsChecked, secondClassIsChecked, thirdClassIsChecked;
+    private String searchQuery;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -39,10 +44,18 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             notes = (ArrayList<Note>) savedInstanceState.getSerializable(Constants.KEY_NOTES);
+
         }
 
         setupToolbar();
         initNotesRecyclerView();
+
+        if (savedInstanceState != null) {
+            firstClassIsChecked = savedInstanceState.getBoolean(Constants.FIRST_CLASS_IS_CHECKED);
+            secondClassIsChecked = savedInstanceState.getBoolean(Constants.SECOND_CLASS_IS_CHECKED);
+            thirdClassIsChecked = savedInstanceState.getBoolean(Constants.THIRD_CLASS_IS_CHECKED);
+            searchQuery = savedInstanceState.getString(Constants.SEARCH_QUERY);
+        }
     }
 
     private void setupToolbar() {
@@ -63,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_action_notes, menu);
 
-        MenuItem myActionMenuItem = menu.findItem( R.id.action_search);
-        final SearchView searchView = (SearchView) myActionMenuItem.getActionView();
+        final MenuItem myActionMenuItem = menu.findItem( R.id.action_search);
+        /*final SearchView*/ searchView = (SearchView) myActionMenuItem.getActionView();
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -82,6 +95,25 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        MenuItem firstClassItem = menu.findItem(R.id.action_filter_first_class);
+        firstClassItem.setChecked(firstClassIsChecked);
+        MenuItem secondClassItem = menu.findItem(R.id.action_filter_second_class);
+        secondClassItem.setChecked(secondClassIsChecked);
+        MenuItem thirdClassItem = menu.findItem(R.id.action_filter_third_class);
+        thirdClassItem.setChecked(thirdClassIsChecked);
+
+        notesAdapter.filter(Note.ClassImportance.FirstClass, !firstClassIsChecked);
+        notesAdapter.filter(Note.ClassImportance.SecondClass, !secondClassIsChecked);
+        notesAdapter.filter(Note.ClassImportance.ThirdClass, !thirdClassIsChecked);
+
+        if (searchQuery != null && !searchQuery.isEmpty()){
+            myActionMenuItem.expandActionView();
+            searchView.setQuery(searchQuery, true);
+            searchView.clearFocus();
+
+            notesAdapter.search(searchQuery);
+        }
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -104,18 +136,25 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.action_filter_first_class:
                 notesAdapter.filter(Note.ClassImportance.FirstClass, item.isChecked());
+                firstClassIsChecked = !item.isChecked();
                 break;
             case R.id.action_filter_second_class:
                 notesAdapter.filter(Note.ClassImportance.SecondClass, item.isChecked());
+                secondClassIsChecked = !item.isChecked();
                 break;
             case R.id.action_filter_third_class:
                 notesAdapter.filter(Note.ClassImportance.ThirdClass, item.isChecked());
+                thirdClassIsChecked = !item.isChecked();
                 break;
         }
 
         switch (item.getItemId()) {
             case R.id.action_filter_first_class:
+                item.setChecked(!item.isChecked());
+                break;
             case R.id.action_filter_second_class:
+                item.setChecked(!item.isChecked());
+                break;
             case R.id.action_filter_third_class:
                 item.setChecked(!item.isChecked());
                 break;
@@ -152,6 +191,12 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
 
         outState.putSerializable(Constants.KEY_NOTES, notes);
+        outState.putBoolean(Constants.FIRST_CLASS_IS_CHECKED, firstClassIsChecked);
+        outState.putBoolean(Constants.SECOND_CLASS_IS_CHECKED, secondClassIsChecked);
+        outState.putBoolean(Constants.THIRD_CLASS_IS_CHECKED, thirdClassIsChecked);
+
+        searchQuery = searchView.getQuery().toString();
+        outState.putString(Constants.SEARCH_QUERY, searchQuery);
     }
 
     @Override

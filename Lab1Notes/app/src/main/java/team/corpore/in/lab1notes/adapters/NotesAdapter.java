@@ -93,7 +93,7 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.VH> {
     private boolean checkNoteByFilter(Note note) {
         boolean filterByClass = filterClassContainsInList(note.getClassImportance(), filterClasses);
         if (note.getText() == null) {
-            return searchQuery.isEmpty() && filterByClass;
+            return note.getTitle().toLowerCase().contains(searchQuery) && filterByClass;
         }
         return (note.getText().toLowerCase().contains(searchQuery) || note.getTitle().toLowerCase().contains(searchQuery)) && filterByClass;
     }
